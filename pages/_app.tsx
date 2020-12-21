@@ -1,7 +1,9 @@
-import Head from 'next/head'
 import '../styles/globals.css'
 
-export default function MyApp({ Component, pageProps }) {
+import type { AppProps } from 'next/app'
+import Head from 'next/head'
+
+export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
       <Head>
@@ -13,7 +15,7 @@ export default function MyApp({ Component, pageProps }) {
         />
         <meta name="description" content="Description" />
         <meta name="keywords" content="Keywords" />
-        <title>Next.js PWA Example</title>
+        <title>Mapeo Webmaps</title>
 
         <link rel="manifest" href="/manifest.json" />
         <link
