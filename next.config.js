@@ -8,6 +8,9 @@ const config = withPreact(
       dest: 'public',
       runtimeCaching,
     },
+    images: {
+      domains: ['firebasestorage.googleapis.com'],
+    },
   })
 )
 
