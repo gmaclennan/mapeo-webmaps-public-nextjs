@@ -6,10 +6,6 @@
 @tailwind components;
 /* Stop purging. */
 
-html,
-body {
-}
-
 /* Start purging... */
 @tailwind utilities;
 /* Stop purging. */

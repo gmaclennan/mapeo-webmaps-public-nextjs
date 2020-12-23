@@ -1,10 +1,11 @@
-import { ListHeader } from 'components/ListHeader'
-import { ListItem } from 'components/ListItem'
-import getMetadata from 'lib/getMetadata'
-import getObservations from 'lib/getObservations'
+import { Container, LeftPanel } from '@/components/layout'
+import { RightPanel } from '@/components/layout'
+import List, { ListHeader, ListItem } from '@/components/List'
+import getMetadata from '@/lib/getMetadata'
+import getObservations from '@/lib/getObservations'
 import { GetServerSideProps } from 'next'
+import dynamic from 'next/dynamic'
 import React from 'react'
-import { useVirtual } from 'react-virtual'
 
 interface Props {
   observations: Array<any>
@@ -15,72 +16,34 @@ interface Props {
   }
 }
 
-function estimateSize(index) {
-  if (index === 0) return 200
-  return 94
-}
+const MapboxGL = dynamic(() => import('@/components/MapboxGL'), { ssr: false })
 
-const isServer = typeof window === 'undefined'
-// Number of items to pre-render on the server
-const SERVER_RENDER_NUM = 15
-
-function Map({ observations = [], metadata = {} }: Props) {
-  const parentRef = React.useRef()
-
-  const rowVirtualizer = useVirtual({
-    size: observations.length + 1,
-    parentRef,
-    estimateSize,
-    overscan: 6,
-  })
-
-  const virtualItems = isServer
-    ? new Array(Math.min(SERVER_RENDER_NUM, observations.length))
-        .fill(true)
-        .map((_, index) => ({ index, start: 0, measureRef: undefined }))
-    : rowVirtualizer.virtualItems
+export default function MapPage({ observations = [], metadata = {} }: Props) {
+  const renderListItem = React.useCallback(
+    (index) => {
+      const {
+        properties: { title, date, image },
+      } = observations[index]
+      return <ListItem {...{ title, date, image }} />
+    },
+    [observations]
+  )
 
   return (
-    <div className="w-screen h-screen flex">
-      <div
-        ref={parentRef}
-        className="hidden md:block w-80 xl:w-96 overflow-y-scroll"
-      >
-        <div
-          style={{ height: `${rowVirtualizer.totalSize}px` }}
-          className="relative w-full"
-        >
-          {virtualItems.map((virtualRow) => {
-            let listItem
-            if (virtualRow.index === 0) {
-              listItem = <ListHeader {...metadata} />
-            } else {
-              const {
-                properties: { title, date, image },
-              } = observations[Math.max(0, virtualRow.index - 1)]
-              listItem = <ListItem {...{ title, date, image }} />
-            }
-            const transform = isServer
-              ? undefined
-              : `translateY(${virtualRow.start}px)`
-            return (
-              <div
-                key={virtualRow.index}
-                ref={virtualRow.measureRef}
-                className="top-0 left-0 w-full absolute"
-                style={{ transform }}
-              >
-                {listItem}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
+    <Container>
+      <LeftPanel>
+        <List
+          itemCount={observations.length}
+          header={<ListHeader {...metadata} />}
+          renderItem={renderListItem}
+        />
+      </LeftPanel>
+      <RightPanel>
+        <MapboxGL />
+      </RightPanel>
+    </Container>
   )
 }
-
-export default Map
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const {
@@ -95,8 +58,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   ) {
     return {
       props: {
-        observations: require('fixtures/observations.json'),
-        metadata: require('fixtures/metadata.json'),
+        observations: require('@/fixtures/observations.json'),
+        metadata: require('@/fixtures/metadata.json'),
       },
     }
   }
