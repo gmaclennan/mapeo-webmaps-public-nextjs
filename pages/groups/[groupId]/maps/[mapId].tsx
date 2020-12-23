@@ -20,6 +20,10 @@ function estimateSize(index) {
   return 94
 }
 
+const isServer = typeof window === 'undefined'
+// Number of items to pre-render on the server
+const SERVER_RENDER_NUM = 15
+
 function Map({ observations = [], metadata = {} }: Props) {
   const parentRef = React.useRef()
 
@@ -27,7 +31,14 @@ function Map({ observations = [], metadata = {} }: Props) {
     size: observations.length + 1,
     parentRef,
     estimateSize,
+    overscan: 6,
   })
+
+  const virtualItems = isServer
+    ? new Array(Math.min(SERVER_RENDER_NUM, observations.length))
+        .fill(true)
+        .map((_, index) => ({ index, start: 0, measureRef: undefined }))
+    : rowVirtualizer.virtualItems
 
   return (
     <div className="w-screen h-screen flex">
@@ -39,7 +50,7 @@ function Map({ observations = [], metadata = {} }: Props) {
           style={{ height: `${rowVirtualizer.totalSize}px` }}
           className="relative w-full"
         >
-          {rowVirtualizer.virtualItems.map((virtualRow) => {
+          {virtualItems.map((virtualRow) => {
             let listItem
             if (virtualRow.index === 0) {
               listItem = <ListHeader {...metadata} />
@@ -49,7 +60,9 @@ function Map({ observations = [], metadata = {} }: Props) {
               } = observations[Math.max(0, virtualRow.index - 1)]
               listItem = <ListItem {...{ title, date, image }} />
             }
-            const transform = `translateY(${virtualRow.start}px)`
+            const transform = isServer
+              ? undefined
+              : `translateY(${virtualRow.start}px)`
             return (
               <div
                 key={virtualRow.index}
