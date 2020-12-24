@@ -6,7 +6,7 @@ import { Container } from '../components/layout'
 import MapboxGL from '../components/MapboxGL'
 
 export default {
-  title: 'MapboxMap',
+  title: 'Mapbox Map',
   component: MapboxGL,
 } as Meta
 

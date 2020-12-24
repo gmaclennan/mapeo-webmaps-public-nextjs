@@ -11,3 +11,13 @@
 /* Stop purging. */
 
 /* Your own custom utilities */
+@layer utilities {
+  @variants responsive {
+    .max-w-screen-p-20 {
+      max-width: calc(100vw - 5rem);
+    }
+    .max-h-screen-p-20 {
+      max-height: calc(100vh - 5rem);
+    }
+  }
+}

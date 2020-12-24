@@ -16,6 +16,7 @@ interface ListProps {
   itemCount: number
   header: React.ReactElement
   renderItem: (index: number) => React.ReactElement
+  // onClick: (index: number) => void
 }
 
 export default function List({ itemCount, header, renderItem }: ListProps) {
@@ -95,10 +96,13 @@ export function ListHeader({
   )
 }
 
-export function ListItem({ title, date, image }) {
+export function ListItem({ title, date, image, onClick }) {
   const formattedDate = format(new Date(date.split('T')[0]), 'do MMM yyyy')
   return (
-    <button className="flex border-t border-gray-300 border-solid w-full text-left py-2.5 px-4">
+    <button
+      className="flex border-t border-gray-300 border-solid w-full text-left py-2.5 px-4"
+      onClick={onClick}
+    >
       <div
         className="relative flex-0 mr-3 overflow-hidden"
         style={{ width: IMAGE_SIZE[0], height: IMAGE_SIZE[1] }}

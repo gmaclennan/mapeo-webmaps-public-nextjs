@@ -1,3 +1,4 @@
+import Dialog from '@/components/Dialog'
 import { Container, LeftPanel } from '@/components/layout'
 import { RightPanel } from '@/components/layout'
 import List, { ListHeader, ListItem } from '@/components/List'
@@ -19,15 +20,26 @@ interface Props {
 const MapboxGL = dynamic(() => import('@/components/MapboxGL'), { ssr: false })
 
 export default function MapPage({ observations = [], metadata = {} }: Props) {
+  const [selected, setSelected] = React.useState(null)
+
   const renderListItem = React.useCallback(
     (index) => {
       const {
         properties: { title, date, image },
       } = observations[index]
-      return <ListItem {...{ title, date, image }} />
+      return (
+        <ListItem
+          {...{ title, date, image }}
+          onClick={() => setSelected(index)}
+        />
+      )
     },
     [observations]
   )
+
+  const {
+    properties: { title, date, image, description },
+  } = observations[selected] || { properties: {} }
 
   return (
     <Container>
@@ -41,6 +53,11 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
       <RightPanel>
         <MapboxGL />
       </RightPanel>
+      <Dialog
+        isOpen={selected != null}
+        onDismiss={() => setSelected(null)}
+        {...{ title, date, image, description }}
+      />
     </Container>
   )
 }
