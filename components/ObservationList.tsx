@@ -1,9 +1,8 @@
+import { Observation } from '@/lib/getObservations'
 import format from 'date-fns/format'
 import Image from 'next/image'
 import React from 'react'
 import { useVirtual } from 'react-virtual'
-
-import { Observation } from '../pages/groups/[groupId]/maps/[...map]'
 
 function estimateSize(index: number) {
   if (index === 0) return 200
@@ -11,8 +10,8 @@ function estimateSize(index: number) {
 }
 
 const isServer = typeof window === 'undefined'
-// Number of items to pre-render on the server
-const SERVER_RENDER_NUM = 15
+// Max number of items to pre-render on the server
+const SERVER_RENDER_NUM = 20
 
 interface ListProps {
   itemCount: number
@@ -43,7 +42,7 @@ export default function ObservationList({
   return (
     <div ref={parentRef} className="flex-1 overflow-y-auto">
       <div
-        style={{ height: `${rowVirtualizer.totalSize}px` }}
+        style={{ height: isServer ? 'auto' : `${rowVirtualizer.totalSize}px` }}
         className="relative w-full"
       >
         {elemT(virtualItems).map((virtualRow) => {

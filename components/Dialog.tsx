@@ -1,12 +1,10 @@
+import { ObservationWithImage } from '@/lib/getObservations'
 import { DialogContent, DialogOverlay } from '@reach/dialog'
 import VisuallyHidden from '@reach/visually-hidden'
 import { format } from 'date-fns'
 import React from 'react'
 
-import {
-  ImagePreview,
-  ObservationWithImage,
-} from '../pages/groups/[groupId]/maps/[...map]'
+import { ImagePreview } from '../pages/groups/[groupId]/maps/[...map]'
 
 interface Props {
   isOpen: boolean
@@ -29,6 +27,8 @@ export default function Dialog({
     let imgContainerStyle
     let imgStyle
     if (imagePreview) {
+      // Use the image preview to size the dialog to fill the screen, and show
+      // the low-res preview whilst the higher-res image loads
       const { src, aspectRatio } = imagePreview
       const { innerWidth: vw, innerHeight: vh } = window
       const vr = vw / vh

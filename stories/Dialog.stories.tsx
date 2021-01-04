@@ -9,4 +9,8 @@ export default {
   component: DialogComponent,
 } as Meta
 
-export const Dialog = () => <DialogComponent isOpen />
+function noop() {
+  // do nothing
+}
+
+export const Dialog = () => <DialogComponent isOpen onDismiss={noop} />

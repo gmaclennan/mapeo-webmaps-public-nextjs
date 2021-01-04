@@ -6,29 +6,15 @@ import ObservationList, {
   ListItem,
 } from '@/components/ObservationList'
 import getMetadata from '@/lib/getMetadata'
-import getObservations from '@/lib/getObservations'
+import getObservations, {
+  Observation,
+  ObservationWithImage,
+} from '@/lib/getObservations'
 import { GetServerSideProps } from 'next'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import React from 'react'
-
-interface BaseObservationProps {
-  _id: string
-  title: string
-  date: string
-  description?: string
-}
-
-type ObservationNoImage = GeoJSON.Feature<
-  GeoJSON.Point | null,
-  BaseObservationProps & { image: null }
->
-export type ObservationWithImage = GeoJSON.Feature<
-  GeoJSON.Point | null,
-  BaseObservationProps & { image: string }
->
-export type Observation = ObservationNoImage | ObservationWithImage
 
 interface Props {
   observations: Array<Observation>
@@ -49,8 +35,6 @@ const MapboxGL = dynamic(() => import('@/components/MapboxGL'), { ssr: false })
 const previewCache = new Map<string, ImagePreview>()
 
 export default function MapPage({ observations = [], metadata = {} }: Props) {
-  const mapRef = React.useRef<mapboxgl.Map | undefined>()
-
   const router = useRouter()
   const {
     pathname,
@@ -92,6 +76,7 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
               if (!(currentTarget instanceof window.Image)) return
               const { src, naturalWidth, naturalHeight } = currentTarget
               const aspectRatio = naturalHeight && naturalWidth / naturalHeight
+              // Store the image preview (e.g. thumbnail) and its aspect ratio
               previewCache.set(_id, { src, aspectRatio })
             }}
           />
@@ -136,6 +121,7 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps<
+  // eslint-disable-next-line @typescript-eslint/ban-types
   {},
   { groupId: string; map: string[] }
 > = async (context) => {

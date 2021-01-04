@@ -1,5 +1,22 @@
 import parseFirestore from 'firestore-parser'
 
+interface BaseObservationProps {
+  _id: string
+  title: string
+  date: string
+  description?: string
+}
+
+type ObservationNoImage = GeoJSON.Feature<
+  GeoJSON.Point | null,
+  BaseObservationProps & { image: null }
+>
+export type ObservationWithImage = GeoJSON.Feature<
+  GeoJSON.Point | null,
+  BaseObservationProps & { image: string }
+>
+export type Observation = ObservationNoImage | ObservationWithImage
+
 const API_BASE =
   'https://firestore.googleapis.com/v1beta1/projects/mapeo-webmaps/databases/(default)/documents/'
 const IMAGE_BASE =
@@ -8,7 +25,7 @@ const IMAGE_BASE =
 export default async function getObservations(
   userId: string,
   mapId: string
-): Promise<Array<any>> {
+): Promise<Observation[]> {
   const url = `${API_BASE}groups/${userId}/maps/${mapId}/observations`
   const response = await fetch(url)
   if (response.status !== 200) throw new Error('Not Found')
@@ -16,8 +33,8 @@ export default async function getObservations(
   return parse(data, userId)
 }
 
-function parse(firestoreData, userId) {
-  return parseFirestore(firestoreData).documents.map(function (doc) {
+function parse(firestoreData: any, userId: string): Observation[] {
+  return parseFirestore(firestoreData).documents.map(function (doc: any) {
     const f = doc.fields
     const imageId = f.properties.image
     if (imageId) {
