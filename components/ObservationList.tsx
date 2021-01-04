@@ -3,7 +3,9 @@ import Image from 'next/image'
 import React from 'react'
 import { useVirtual } from 'react-virtual'
 
-function estimateSize(index) {
+import { Observation } from '../pages/groups/[groupId]/maps/[...map]'
+
+function estimateSize(index: number) {
   if (index === 0) return 200
   return 94
 }
@@ -16,11 +18,14 @@ interface ListProps {
   itemCount: number
   header: React.ReactElement
   renderItem: (index: number) => React.ReactElement
-  // onClick: (index: number) => void
 }
 
-export default function List({ itemCount, header, renderItem }: ListProps) {
-  const parentRef = React.useRef()
+export default function ObservationList({
+  itemCount,
+  header,
+  renderItem,
+}: ListProps) {
+  const parentRef = React.useRef(null)
 
   const rowVirtualizer = useVirtual({
     size: itemCount + 1,
@@ -41,7 +46,7 @@ export default function List({ itemCount, header, renderItem }: ListProps) {
         style={{ height: `${rowVirtualizer.totalSize}px` }}
         className="relative w-full"
       >
-        {virtualItems.map((virtualRow) => {
+        {elemT(virtualItems).map((virtualRow) => {
           const transform = isServer
             ? undefined
             : `translateY(${virtualRow.start}px)`
@@ -96,24 +101,42 @@ export function ListHeader({
   )
 }
 
-export function ListItem({ title, date, image, onClick }) {
+interface ListItemProps
+  extends Pick<Observation['properties'], 'title' | 'date' | 'image'> {
+  href?: string
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void
+  onImageLoad?: (e: React.SyntheticEvent<HTMLImageElement, Event>) => void
+}
+
+export function ListItem({
+  title,
+  date,
+  image,
+  href,
+  onClick,
+  onImageLoad,
+}: ListItemProps) {
   const formattedDate = format(new Date(date.split('T')[0]), 'do MMM yyyy')
   return (
-    <button
-      className="flex border-t border-gray-300 border-solid w-full text-left py-2.5 px-4"
+    <a
       onClick={onClick}
+      href={href}
+      className="flex border-t border-gray-300 border-solid w-full text-left py-2.5 px-4"
     >
       <div
         className="relative flex-0 mr-3 overflow-hidden"
         style={{ width: IMAGE_SIZE[0], height: IMAGE_SIZE[1] }}
       >
-        <Image
-          width={IMAGE_SIZE[0]}
-          height={IMAGE_SIZE[1]}
-          objectFit="cover"
-          src={image}
-          priority
-        />
+        {image && (
+          <Image
+            width={IMAGE_SIZE[0]}
+            height={IMAGE_SIZE[1]}
+            objectFit="cover"
+            src={image}
+            onLoad={onImageLoad}
+            priority
+          />
+        )}
       </div>
       <div className="flex-1">
         <h2 className="font-bold leading-tight xl:text-lg xl:leading-snug mb-1 xl:mb-0">
@@ -123,6 +146,14 @@ export function ListItem({ title, date, image, onClick }) {
           {formattedDate}
         </h3>
       </div>
-    </button>
+    </a>
   )
+}
+
+/** Type workaround for https://github.com/Microsoft/TypeScript/issues/7294#issuecomment-465794460 */
+/** See https://github.com/microsoft/TypeScript/issues/30271#issuecomment-476278582 */
+type ArrayElem<A> = A extends Array<infer Elem> ? Elem : never
+
+export function elemT<T>(array: T): Array<ArrayElem<T>> {
+  return array as any
 }
