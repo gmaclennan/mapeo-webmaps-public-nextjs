@@ -20,7 +20,6 @@
     "mapbox-gl": "^1.13.0",
     "next": "^10.0.3",
     "next-plugin-preact": "^3.0.3",
-    "next-pwa": "^3.1.0",
     "postcss": "^7.0.35",
     "preact": "^10.5.7",
     "preact-render-to-string": "^5.1.12",
