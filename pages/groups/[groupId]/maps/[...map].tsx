@@ -1,6 +1,7 @@
 import Dialog from '@/components/Dialog'
 import { Container, LeftPanel } from '@/components/layout'
 import { RightPanel } from '@/components/layout'
+import { Camera, CircleLayer, Source } from '@/components/MapboxGL'
 import ObservationList, {
   ListHeader,
   ListItem,
@@ -10,6 +11,8 @@ import getObservations, {
   Observation,
   ObservationWithImage,
 } from '@/lib/getObservations'
+import calcExtent from '@turf/bbox'
+import { Feature, featureCollection as fc } from '@turf/helpers'
 import { GetServerSideProps } from 'next'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -30,6 +33,40 @@ export interface ImagePreview {
   aspectRatio: number
 }
 
+const points: mapboxgl.CircleLayer = {
+  id: 'points',
+  type: 'circle',
+  source: 'features',
+  paint: {
+    // make circles larger as the user zooms from z12 to z22
+    'circle-radius': {
+      base: 1.5,
+      stops: [
+        [7, 5],
+        [18, 25],
+      ],
+    },
+    'circle-color': '#d95f02',
+    'circle-opacity': 0.75,
+    'circle-stroke-width': 1.5,
+    'circle-stroke-color': '#ffffff',
+    'circle-stroke-opacity': 0.9,
+  },
+}
+
+// const pointsHover = {
+//   id: 'points-hover',
+//   type: 'circle',
+//   source: 'features',
+//   filter: ['==', '_id', ''],
+//   paint: assign({}, points.paint, {
+//     'circle-opacity': 1,
+//     'circle-stroke-width': 2.5,
+//     'circle-stroke-color': '#ffffff',
+//     'circle-stroke-opacity': 1,
+//   }),
+// }
+
 const MapboxGL = dynamic(() => import('@/components/MapboxGL'), { ssr: false })
 
 const previewCache = new Map<string, ImagePreview>()
@@ -46,16 +83,7 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
     ? observations.find((obs) => obs.properties._id === pointId)
     : undefined
 
-  // // Fly map to observation if a popup opens because of a click on List Item
-  // React.useEffect(() => {
-  //   if (eventSource !== 'list') return
-  //   if (!activeObservation) return
-  //   if (state.value !== 'popupOpen') return
-
-  //   const map = mapRef.current
-  //   const coords = activeObservation.geometry?.coordinates as [number, number]
-  //   coords && map && map.flyTo({ center: coords, zoom: FLY_TO_ZOOM })
-  // }, [state.value, activeObservation, eventSource])
+  const extent = calcExtent(fc(observations as Feature[]))
 
   const renderListItem = React.useCallback(
     (index) => {
@@ -99,7 +127,17 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
         />
       </LeftPanel>
       <RightPanel>
-        <MapboxGL mapRef={mapRef} activeObservation={activeObservation} />
+        <MapboxGL>
+          <Camera
+            center={
+              activeObservation?.geometry?.coordinates as [number, number]
+            }
+            zoom={12.5}
+            bounds={activeObservation ? undefined : extent}
+          />
+          <Source id="features" data={fc(observations as Feature[])} />
+          <CircleLayer style={points} />
+        </MapboxGL>
       </RightPanel>
       <Dialog
         isOpen={isDialogOpen}

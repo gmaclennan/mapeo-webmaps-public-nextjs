@@ -1,3 +1,4 @@
+import { Feature, Point } from '@turf/helpers'
 import parseFirestore from 'firestore-parser'
 
 interface BaseObservationProps {
@@ -7,12 +8,12 @@ interface BaseObservationProps {
   description?: string
 }
 
-type ObservationNoImage = GeoJSON.Feature<
-  GeoJSON.Point | null,
+type ObservationNoImage = Feature<
+  Point | null,
   BaseObservationProps & { image: null }
 >
-export type ObservationWithImage = GeoJSON.Feature<
-  GeoJSON.Point | null,
+export type ObservationWithImage = Feature<
+  Point | null,
   BaseObservationProps & { image: string }
 >
 export type Observation = ObservationNoImage | ObservationWithImage
