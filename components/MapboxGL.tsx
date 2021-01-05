@@ -18,7 +18,7 @@ const MapContext = React.createContext<mapboxgl.Map | null | undefined>(
   undefined
 )
 
-export default function MapboxGL({ children }: Props) {
+export function Map({ children }: Props) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   const [map, setMap] = React.useState<mapboxgl.Map | null>(null)
 
@@ -31,8 +31,8 @@ export default function MapboxGL({ children }: Props) {
     setMap(map)
 
     return () => {
-      map.remove()
       setMap(null)
+      map.remove()
     }
   }, [])
 
@@ -50,6 +50,7 @@ interface ViewportCentered {
 }
 interface ViewportBounded {
   bounds: BBox
+  options?: mapboxgl.FitBoundsOptions
 }
 interface CameraProps {
   viewport: ViewportCentered | ViewportBounded
@@ -73,6 +74,7 @@ export function Camera({ viewport, initialViewport }: CameraProps) {
     const initial = initialViewport || viewport
     if (isBoundedViewport(initial)) {
       map.fitBounds(initial.bounds as mapboxgl.LngLatBoundsLike, {
+        ...initial.options,
         duration: 0,
       })
     } else {
@@ -85,7 +87,10 @@ export function Camera({ viewport, initialViewport }: CameraProps) {
   useDeepCompareEffect(() => {
     if (!map) return
     if (isBoundedViewport(viewport)) {
-      map.fitBounds(viewport.bounds as mapboxgl.LngLatBoundsLike)
+      map.fitBounds(
+        viewport.bounds as mapboxgl.LngLatBoundsLike,
+        viewport.options
+      )
     } else {
       map.flyTo(viewport)
     }
@@ -134,14 +139,63 @@ export function CircleLayer({ style }: LayerProps) {
       map.addLayer(style)
     })
     return () => {
-      map && map.removeLayer(id)
+      try {
+        map.removeLayer(id)
+      } catch (e) {}
     }
   }, [style, map])
 
   return null
 }
 
-export function Interactive() {
+interface InteractiveProps {
+  layerId: string
+  sourceId: string
+}
+
+export function Interactive({ layerId, sourceId }: InteractiveProps) {
+  const map = React.useContext(MapContext)
+  const hovered = React.useRef<number | string>()
+
+  React.useEffect(() => {
+    if (!map) return
+
+    function onMouseMove(e: mapboxgl.MapMouseEvent & mapboxgl.EventData) {
+      if (!map || !e.features.length) return
+      if (hovered.current != null) {
+        map.setFeatureState(
+          { source: sourceId, id: hovered.current },
+          { hover: false }
+        )
+      }
+      hovered.current = e.features[0].id
+      map.getCanvas().style.cursor = 'pointer'
+      map.setFeatureState(
+        { source: sourceId, id: hovered.current },
+        { hover: true }
+      )
+    }
+
+    function onMouseLeave() {
+      if (!map) return
+      if (hovered.current != null) {
+        map.setFeatureState(
+          { source: sourceId, id: hovered.current },
+          { hover: false }
+        )
+      }
+      map.getCanvas().style.cursor = ''
+      hovered.current = undefined
+    }
+
+    map.on('mousemove', layerId, onMouseMove)
+    map.on('mouseleave', layerId, onMouseLeave)
+
+    return () => {
+      map && map.off('mousemove', onMouseMove)
+      map && map.off('mouseleave', onMouseLeave)
+    }
+  }, [map, layerId, sourceId])
   return null
 }
 
@@ -149,8 +203,7 @@ function onStyleLoaded(map: mapboxgl.Map, fn: () => void) {
   if (map.isStyleLoaded()) {
     process.nextTick(fn)
   } else {
-    map.once('styledata', (e) => {
-      console.log('styledata', e)
+    map.once('styledata', () => {
       fn()
     })
   }

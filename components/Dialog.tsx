@@ -9,19 +9,19 @@ import { ImagePreview } from '../pages/groups/[groupId]/maps/[...map]'
 interface Props {
   isOpen: boolean
   onDismiss: () => void
-  observationProperties?: ObservationWithImage['properties']
+  activeObservation?: ObservationWithImage
   imagePreview?: ImagePreview
 }
 
 export default function Dialog({
   isOpen,
   onDismiss,
-  observationProperties,
+  activeObservation,
   imagePreview,
 }: Props) {
   let content = null
-  if (observationProperties) {
-    const { title, date, image, description } = observationProperties || {}
+  if (isOpen && activeObservation) {
+    const { title, date, image, description } = activeObservation.properties
     const formattedDate =
       date && format(new Date(date.split('T')[0]), 'do MMM yyyy')
     let imgContainerStyle
@@ -62,6 +62,7 @@ export default function Dialog({
             src={image}
             style={imgStyle}
             className="max-w-screen max-h-full sm:max-w-screen-p-20 sm:max-h-screen-p-20 block"
+            alt={description || title}
           />
         </div>
         <div className="sm:absolute bottom-0 left-0 bg-black sm:bg-opacity-50 sm:max-w-md text-white text-shadow-sm py-3 px-4">
