@@ -28,7 +28,8 @@
     "react": "npm:@preact/compat@0.0.3",
     "react-dom": "npm:@preact/compat@0.0.3",
     "react-virtual": "^2.3.2",
-    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2"
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
+    "use-deep-compare-effect": "^1.6.1"
   },
   "license": "MIT",
   "devDependencies": {

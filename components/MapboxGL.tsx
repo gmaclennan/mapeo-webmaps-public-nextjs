@@ -4,6 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { BBox, FeatureCollection } from '@turf/helpers'
 import mapboxgl from 'mapbox-gl'
 import React from 'react'
+import useDeepCompareEffect from 'use-deep-compare-effect'
 
 interface Props {
   children?: React.ReactNode
@@ -43,63 +44,52 @@ export default function MapboxGL({ children }: Props) {
   )
 }
 
-type CameraProps =
-  | {
-      center: [number, number]
-      zoom: number
-    }
-  | {
-      bounds: BBox
-    }
+interface ViewportCentered {
+  center: [number, number]
+  zoom: number
+}
+interface ViewportBounded {
+  bounds: BBox
+}
+interface CameraProps {
+  viewport: ViewportCentered | ViewportBounded
+  initialViewport?: ViewportCentered | ViewportBounded
+}
 
-export function Camera(props: CameraProps) {
+function isBoundedViewport(
+  viewport: ViewportCentered | ViewportBounded
+): viewport is ViewportBounded {
+  return Array.isArray((viewport as ViewportBounded).bounds)
+}
+
+export function Camera({ viewport, initialViewport }: CameraProps) {
   const map = React.useContext(MapContext)
-  let lon: number | undefined
-  let lat: number | undefined
-  let zoom: number | undefined
-  let w: number | undefined
-  let s: number | undefined
-  let e: number | undefined
-  let n: number | undefined
-
-  if ('bounds' in props && Array.isArray(props.bounds)) {
-    w = props.bounds[0]
-    s = props.bounds[1]
-    e = props.bounds[2]
-    n = props.bounds[3]
-  } else if ('center' in props && Array.isArray(props.center)) {
-    lon = props.center[0]
-    lat = props.center[1]
-    zoom = props.zoom ?? 12.5
-  }
 
   // This will run when the map instance is first created, so that the map
   // starts at center & zoom, but for changes to center and zoom, the next
   // useState with flyTo() will run
   React.useEffect(() => {
     if (!map) return
-    if (isNum(lon) && isNum(lat) && isNum(zoom)) {
-      map.setZoom(zoom)
-      map.setCenter([lon, lat])
-    } else if (isNum(w) && isNum(s) && isNum(e) && isNum(n)) {
-      map.fitBounds([w, s, e, n], { duration: 0 })
+    const initial = initialViewport || viewport
+    if (isBoundedViewport(initial)) {
+      map.fitBounds(initial.bounds as mapboxgl.LngLatBoundsLike, {
+        duration: 0,
+      })
+    } else {
+      map.setZoom(initial.zoom)
+      map.setCenter(initial.center)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map])
 
-  React.useEffect(() => {
+  useDeepCompareEffect(() => {
     if (!map) return
-    if (isNum(lon) && isNum(lat) && isNum(zoom)) {
-      map.flyTo({ center: [lon, lat], zoom })
+    if (isBoundedViewport(viewport)) {
+      map.fitBounds(viewport.bounds as mapboxgl.LngLatBoundsLike)
+    } else {
+      map.flyTo(viewport)
     }
-  }, [lon, lat, zoom, map])
-
-  React.useEffect(() => {
-    if (!map) return
-    if (isNum(w) && isNum(s) && isNum(e) && isNum(n)) {
-      map.fitBounds([w, s, e, n])
-    }
-  }, [w, s, e, n, map])
+  }, [map, viewport])
 
   return null
 }
@@ -144,15 +134,15 @@ export function CircleLayer({ style }: LayerProps) {
       map.addLayer(style)
     })
     return () => {
-      map.removeLayer(id)
+      map && map.removeLayer(id)
     }
   }, [style, map])
 
   return null
 }
 
-function isNum(value: unknown): value is number {
-  return typeof value === 'number'
+export function Interactive() {
+  return null
 }
 
 function onStyleLoaded(map: mapboxgl.Map, fn: () => void) {

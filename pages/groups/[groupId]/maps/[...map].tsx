@@ -129,11 +129,18 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
       <RightPanel>
         <MapboxGL>
           <Camera
-            center={
-              activeObservation?.geometry?.coordinates as [number, number]
+            initialViewport={{ center: [0, 0], zoom: 0 }}
+            viewport={
+              activeObservation?.geometry
+                ? {
+                    center: activeObservation.geometry.coordinates as [
+                      number,
+                      number
+                    ],
+                    zoom: 12.5,
+                  }
+                : { bounds: extent }
             }
-            zoom={12.5}
-            bounds={activeObservation ? undefined : extent}
           />
           <Source id="features" data={fc(observations as Feature[])} />
           <CircleLayer style={points} />
