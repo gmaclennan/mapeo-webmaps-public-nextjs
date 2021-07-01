@@ -111,7 +111,6 @@ export default function MapPage({ observations = [], metadata = {} }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps<
-  // eslint-disable-next-line @typescript-eslint/ban-types
   {},
   { groupId: string; map: string[] }
 > = async (context) => {

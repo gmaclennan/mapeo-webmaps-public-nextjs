@@ -134,6 +134,7 @@ export function ListItem({
             src={image}
             onLoad={onImageLoad}
             priority
+            alt=""
           />
         )}
       </div>
